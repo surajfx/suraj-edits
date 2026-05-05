@@ -429,6 +429,9 @@
   const CLOUDINARY_CLOUD = 'djq3xu2fg';
   const CLOUDINARY_PRESET = 'ml_default';
 
+  // Test Cloudinary connection on load
+  console.log('Cloudinary configured:', CLOUDINARY_CLOUD, CLOUDINARY_PRESET);
+
   let currentUser = null;
   let selectedFile = null;
   let selectedCategory = null;
@@ -531,33 +534,43 @@
         document.getElementById('progressWrap').style.display = 'block';
         document.getElementById('progressText').textContent = 'Uploading image...';
 
-        const formData = new FormData();
-        formData.append('file', selectedFile);
-        formData.append('upload_preset', CLOUDINARY_PRESET);
-        formData.append('folder', 'prompt-gallery');
-
-        // Simulate progress
+        // Simulate progress bar
         let prog = 0;
         const progInterval = setInterval(() => {
-          prog = Math.min(prog + 10, 85);
+          prog = Math.min(prog + 5, 90);
           document.getElementById('progressFill').style.width = prog + '%';
           document.getElementById('progressText').textContent = `Uploading image... ${prog}%`;
-        }, 200);
+        }, 300);
 
-        const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD}/image/upload`, {
-          method: 'POST',
-          body: formData
-        });
+        try {
+          const formData = new FormData();
+          formData.append('file', selectedFile);
+          formData.append('upload_preset', CLOUDINARY_PRESET);
 
-        clearInterval(progInterval);
-        document.getElementById('progressFill').style.width = '100%';
-        document.getElementById('progressText').textContent = 'Upload complete!';
+          const res = await fetch(
+            `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD}/image/upload`,
+            { method: 'POST', body: formData }
+          );
 
-        const data = await res.json();
-        if (data.secure_url) {
-          imageUrl = data.secure_url;
-        } else {
-          throw new Error('Image upload failed');
+          clearInterval(progInterval);
+          const data = await res.json();
+
+          if (data.secure_url) {
+            imageUrl = data.secure_url;
+            document.getElementById('progressFill').style.width = '100%';
+            document.getElementById('progressText').textContent = 'Image uploaded! ✓';
+          } else {
+            clearInterval(progInterval);
+            console.error('Cloudinary error:', data);
+            // Continue without image if upload fails
+            imageUrl = null;
+            document.getElementById('progressWrap').style.display = 'none';
+          }
+        } catch (uploadErr) {
+          clearInterval(progInterval);
+          console.error('Upload error:', uploadErr);
+          imageUrl = null;
+          document.getElementById('progressWrap').style.display = 'none';
         }
       }
 

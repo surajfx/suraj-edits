@@ -410,7 +410,7 @@
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
   import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
   import { getFirestore, collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-  import { getStorage, ref, uploadBytesResumable, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
+  
 
   const firebaseConfig = {
     apiKey: "AIzaSyDCb0OReMC3BScflE5lpvsp9F6Denq5nqM",
@@ -424,7 +424,10 @@
   const app = initializeApp(firebaseConfig);
   const auth = getAuth(app);
   const db = getFirestore(app);
-  const storage = getStorage(app);
+
+  // Cloudinary config
+  const CLOUDINARY_CLOUD = 'djq3xu2fg';
+  const CLOUDINARY_PRESET = 'ml_default';
 
   let currentUser = null;
   let selectedFile = null;
@@ -523,26 +526,39 @@
     try {
       let imageUrl = null;
 
-      // Upload image if selected
+      // Upload image via Cloudinary
       if (selectedFile) {
         document.getElementById('progressWrap').style.display = 'block';
-        const storageRef = ref(storage, `prompts/${Date.now()}_${selectedFile.name}`);
-        const uploadTask = uploadBytesResumable(storageRef, selectedFile);
+        document.getElementById('progressText').textContent = 'Uploading image...';
 
-        imageUrl = await new Promise((resolve, reject) => {
-          uploadTask.on('state_changed',
-            (snap) => {
-              const pct = Math.round((snap.bytesTransferred / snap.totalBytes) * 100);
-              document.getElementById('progressFill').style.width = pct + '%';
-              document.getElementById('progressText').textContent = `Uploading image... ${pct}%`;
-            },
-            reject,
-            async () => {
-              const url = await getDownloadURL(uploadTask.snapshot.ref);
-              resolve(url);
-            }
-          );
+        const formData = new FormData();
+        formData.append('file', selectedFile);
+        formData.append('upload_preset', CLOUDINARY_PRESET);
+        formData.append('folder', 'prompt-gallery');
+
+        // Simulate progress
+        let prog = 0;
+        const progInterval = setInterval(() => {
+          prog = Math.min(prog + 10, 85);
+          document.getElementById('progressFill').style.width = prog + '%';
+          document.getElementById('progressText').textContent = `Uploading image... ${prog}%`;
+        }, 200);
+
+        const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD}/image/upload`, {
+          method: 'POST',
+          body: formData
         });
+
+        clearInterval(progInterval);
+        document.getElementById('progressFill').style.width = '100%';
+        document.getElementById('progressText').textContent = 'Upload complete!';
+
+        const data = await res.json();
+        if (data.secure_url) {
+          imageUrl = data.secure_url;
+        } else {
+          throw new Error('Image upload failed');
+        }
       }
 
       // Save to Firestore

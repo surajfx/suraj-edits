@@ -394,7 +394,15 @@
     <button class="cat-btn" data-cat="portrait" onclick="selectCat(this)">👤 Portrait</button>
     <button class="cat-btn" data-cat="fantasy" onclick="selectCat(this)">🔮 Fantasy</button>
     <button class="cat-btn" data-cat="other" onclick="selectCat(this)">🎨 Other</button>
-    <button class="cat-btn" data-cat="s-insta" onclick="selectCat(this)" id="sInstaBtn" style="display:none;">📸 S-Insta</button>
+  </div>
+
+  <!-- PERSONAL LABEL - only for admins -->
+  <div id="personalLabelSection" style="display:none;">
+    <div class="section-label" style="margin-top:20px;">👤 Personal Label</div>
+    <div class="category-grid">
+      <button class="cat-btn" data-label="SURAJ" onclick="selectLabel(this)" id="labelSuraj">👑 Suraj</button>
+      <button class="cat-btn" data-label="RINA" onclick="selectLabel(this)" id="labelRina">✨ Rina</button>
+    </div>
   </div>
 
   <!-- PROGRESS -->
@@ -457,9 +465,20 @@
     if (user) {
       document.getElementById('loginGate').style.display = 'none';
       document.getElementById('uploadContent').style.display = 'block';
-      // S-Insta only for admin
-      if (user.email === 'su905072@gmail.com') {
-        document.getElementById('sInstaBtn').style.display = 'block';
+      // Personal label for admins
+      const adminEmails = ['su905072@gmail.com', 'rinaeditig@gmail.com'];
+      if (adminEmails.includes(user.email)) {
+        document.getElementById('personalLabelSection').style.display = 'block';
+        // Auto-select their label
+        if (user.email === 'su905072@gmail.com') {
+          const btn = document.getElementById('labelSuraj');
+          btn.classList.add('active');
+          selectedLabel = 'SURAJ';
+        } else if (user.email === 'rinaeditig@gmail.com') {
+          const btn = document.getElementById('labelRina');
+          btn.classList.add('active');
+          selectedLabel = 'RINA';
+        }
       }
     } else {
       document.getElementById('loginGate').style.display = 'block';
@@ -619,6 +638,7 @@
         boyPrompt,
         tips: tipsText || '',
         category: selectedCategory,
+        personalLabel: selectedLabel || '',
         tags: [selectedCategory],
         imageUrl,
         author: currentUser.displayName || currentUser.email.split('@')[0],
@@ -662,4 +682,4 @@
   };
 </script>
 </body>
-</html
+</html>

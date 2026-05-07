@@ -359,15 +359,30 @@
   <!-- GIRL PROMPT -->
   <div class="section-label">👩 Girl Version Prompt</div>
   <div class="form-group">
-    <textarea class="form-input" id="girlPrompt" placeholder="Enter the girl version prompt here..." maxlength="1000"></textarea>
-    <div class="char-count"><span id="girlCount">0</span>/1000</div>
+    <textarea class="form-input" id="girlPrompt" placeholder="Enter the girl version prompt here..." maxlength="2000"></textarea>
+    <div class="char-count"><span id="girlCount">0</span>/2000</div>
   </div>
 
   <!-- BOY PROMPT -->
   <div class="section-label">👨 Boy Version Prompt</div>
   <div class="form-group">
-    <textarea class="form-input" id="boyPrompt" placeholder="Enter the boy version prompt here..." maxlength="1000"></textarea>
-    <div class="char-count"><span id="boyCount">0</span>/1000</div>
+    <textarea class="form-input" id="boyPrompt" placeholder="Enter the boy version prompt here..." maxlength="2000"></textarea>
+    <div class="char-count"><span id="boyCount">0</span>/2000</div>
+  </div>
+
+  <!-- TIPS & TRICKS -->
+  <div class="section-label">💡 Tips &amp; Tricks</div>
+  <div class="form-group">
+    <select class="form-input" id="tipsToolSelect" onchange="updateTipsText()" style="margin-bottom:10px;cursor:pointer;background:var(--input-bg);color:var(--text);">
+      <option value="">— Select AI Tool —</option>
+      <option value="ChatGPT">ChatGPT</option>
+      <option value="Gemini">Gemini</option>
+      <option value="Midjourney">Midjourney</option>
+      <option value="DeepSeek">DeepSeek</option>
+      <option value="Leonardo AI">Leonardo AI</option>
+    </select>
+    <textarea class="form-input" id="tipsInput" placeholder="Select an AI tool above to auto-fill..." maxlength="90" style="resize:none;height:72px;opacity:0.85;"></textarea>
+    <div class="char-count"><span id="tipsCount">0</span>/90</div>
   </div>
 
   <!-- CATEGORY -->
@@ -379,6 +394,7 @@
     <button class="cat-btn" data-cat="portrait" onclick="selectCat(this)">👤 Portrait</button>
     <button class="cat-btn" data-cat="fantasy" onclick="selectCat(this)">🔮 Fantasy</button>
     <button class="cat-btn" data-cat="other" onclick="selectCat(this)">🎨 Other</button>
+    <button class="cat-btn" data-cat="s-insta" onclick="selectCat(this)" id="sInstaBtn" style="display:none;">📸 S-Insta</button>
   </div>
 
   <!-- PROGRESS -->
@@ -441,6 +457,10 @@
     if (user) {
       document.getElementById('loginGate').style.display = 'none';
       document.getElementById('uploadContent').style.display = 'block';
+      // S-Insta only for admin
+      if (user.email === 'su905072@gmail.com') {
+        document.getElementById('sInstaBtn').style.display = 'block';
+      }
     } else {
       document.getElementById('loginGate').style.display = 'block';
       document.getElementById('uploadContent').style.display = 'none';
@@ -497,6 +517,23 @@
   });
   document.getElementById('boyPrompt').addEventListener('input', function() {
     document.getElementById('boyCount').textContent = this.value.length;
+  });
+
+  // Tips auto-fill
+  window.updateTipsText = function() {
+    const tool = document.getElementById('tipsToolSelect').value;
+    const tips = document.getElementById('tipsInput');
+    if (tool) {
+      const text = 'This prompt works with ' + tool + '. Copy & paste into your AI tool to create stunning visuals.';
+      tips.value = text.substring(0, 90);
+      document.getElementById('tipsCount').textContent = tips.value.length;
+    } else {
+      tips.value = '';
+      document.getElementById('tipsCount').textContent = '0';
+    }
+  };
+  document.getElementById('tipsInput').addEventListener('input', function() {
+    document.getElementById('tipsCount').textContent = this.value.length;
   });
 
   window.selectCat = function(btn) {
@@ -575,10 +612,12 @@
       }
 
       // Save to Firestore
+      const tipsText = document.getElementById('tipsInput').value.trim();
       await addDoc(collection(db, 'prompts'), {
         title,
         girlPrompt,
         boyPrompt,
+        tips: tipsText || '',
         category: selectedCategory,
         tags: [selectedCategory],
         imageUrl,
@@ -623,4 +662,4 @@
   };
 </script>
 </body>
-</html>
+</html

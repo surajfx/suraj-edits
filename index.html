@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -1009,17 +1008,20 @@
   // Load prompts
   async function loadPrompts() {
     try {
-      const q = query(collection(db, 'prompts'), orderBy('copyCount', 'desc'));
-      const snap = await getDocs(q);
+      // Simple query without orderBy to avoid index issues
+      const snap = await getDocs(collection(db, 'prompts'));
       allPrompts = snap.docs.map(d => ({ id: d.id, ...d.data() }));
 
-      // If no data yet, show demo cards
+      // Sort by copyCount client-side
+      allPrompts.sort((a, b) => (b.copyCount || 0) - (a.copyCount || 0));
+
       if (allPrompts.length === 0) {
         allPrompts = getDemoPrompts();
       }
 
       renderPrompts(allPrompts);
     } catch (e) {
+      console.error('Load error:', e);
       allPrompts = getDemoPrompts();
       renderPrompts(allPrompts);
     }
@@ -1247,7 +1249,7 @@
     }
   };
 
-  // Filter
+ // Filter
   window.setFilter = function(filter) {
     currentFilter = filter;
     document.querySelectorAll('.filter-btn').forEach(b => {
@@ -1290,7 +1292,7 @@
   document.querySelectorAll('.filter-btn').forEach(btn => {
     btn.addEventListener('click', () => setFilter(btn.dataset.filter));
   });
- 
+
   // Search
   document.getElementById('searchInput').addEventListener('input', function() {
     const q = this.value.toLowerCase();

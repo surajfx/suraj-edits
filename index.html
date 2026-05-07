@@ -630,9 +630,9 @@
 
   /* PROMPT SECTIONS */
   .prompt-sections {
-    display: flex;
-    flex-direction: column;
-    gap: 14px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
     margin-bottom: 24px;
   }
 
@@ -691,6 +691,8 @@
     font-family: 'DM Mono', monospace;
     color: #9ba3b8;
     line-height: 1.7;
+    max-height: 140px;
+    overflow-y: auto;
   }
 
   /* MODAL ACTIONS */
@@ -826,16 +828,17 @@
 <!-- HERO -->
 <section class="hero">
   <div class="hero-glow"></div>
-  <h1>Discover <em>AI Prompts</em><br>That Actually Work</h1>
-  <p class="hero-sub">Copy & use prompts for Midjourney, DALL·E, Stable Diffusion & more</p>
+  <div style="display:inline-flex;align-items:center;gap:8px;background:rgba(120,80,255,0.12);border:1px solid rgba(120,80,255,0.35);border-radius:999px;padding:8px 20px;margin-bottom:20px;">
+    <span style="color:#a78bfa;font-size:14px;">✦</span>
+    <span style="color:#a78bfa;font-family:Syne,sans-serif;font-weight:700;font-size:12px;letter-spacing:2px;">AI PROMPT COLLECTION</span>
+    <span style="color:#a78bfa;font-size:14px;">✦</span>
+  </div>
+  <div class="search-wrap" style="max-width:480px;width:100%;margin:0 auto;">
+    <span class="search-icon">🔍</span>
+    <input type="text" class="search-input" id="searchInput" placeholder="Search prompts...">
+    <span class="search-clear" id="searchClear">×</span>
+  </div>
 </section>
-
-<!-- SEARCH -->
-<div class="search-wrap" style="padding: 0 20px; max-width: 540px; margin: 0 auto 20px;">
-  <span class="search-icon">🔍</span>
-  <input type="text" class="search-input" id="searchInput" placeholder="Search prompts...">
-  <span class="search-clear" id="searchClear">×</span>
-</div>
 
 <!-- FILTERS -->
 <div class="filters">
@@ -1091,8 +1094,7 @@
     const prompt = allPrompts.find(p => p.id === id);
     if (!prompt) return;
     currentPrompt = prompt;
-
-    // Update view count
+ // Update view count
     if (!id.startsWith('demo')) {
       updateDoc(doc(db, 'prompts', id), { views: increment(1) }).catch(() => {});
     }
@@ -1136,6 +1138,7 @@
 
     document.getElementById('modalOverlay').classList.add('open');
     document.body.style.overflow = 'hidden';
+    history.pushState({ modal: true, id }, '', '');
   };
 
   // Close modal
@@ -1146,7 +1149,22 @@
   window.closeModal = function() {
     document.getElementById('modalOverlay').classList.remove('open');
     document.body.style.overflow = '';
+    if (history.state && history.state.modal) {
+      history.back();
+    }
   };
+
+  // Handle browser back button - close modal instead of leaving page
+  window.addEventListener('popstate', function(e) {
+    const overlay = document.getElementById('modalOverlay');
+    if (overlay.classList.contains('open')) {
+      overlay.classList.remove('open');
+      document.body.style.overflow = '';
+    }
+  });
+
+  // Push state when modal opens
+  const origOpenModal = window.openModal;
 
   // Copy prompt
   window.copyPrompt = function(type) {
@@ -1277,10 +1295,21 @@
     t.textContent = msg;
     t.classList.add('show');
     setTimeout(() => t.classList.remove('show'), 2500);
-  }
-
-  // Init
+        }
+ // Init
   loadPrompts();
 </script>
+
+<!-- FOOTER -->
+<footer style="text-align:center;padding:30px 20px 80px;border-top:1px solid rgba(255,255,255,0.06);margin-top:20px;">
+  <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:16px;margin-bottom:6px;">Prompt Gallery</div>
+  <div style="color:#5a5f72;font-size:12px;margin-bottom:16px;">surajfx.in</div>
+  <div style="display:flex;justify-content:center;gap:20px;flex-wrap:wrap;">
+    <a href="about.html" style="color:#a0a8c0;text-decoration:none;font-size:12px;font-family:'Syne',sans-serif;font-weight:600;">About</a>
+    <a href="privacy.html" style="color:#a0a8c0;text-decoration:none;font-size:12px;font-family:'Syne',sans-serif;font-weight:600;">Privacy Policy</a>
+    <a href="contact.html" style="color:#a0a8c0;text-decoration:none;font-size:12px;font-family:'Syne',sans-serif;font-weight:600;">Contact</a>
+  </div>
+  <div style="color:#3a3f52;font-size:11px;margin-top:16px;">© 2026 Prompt Gallery · All rights reserved</div>
+</footer>
 </body>
 </html>

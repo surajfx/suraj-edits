@@ -843,6 +843,7 @@
     <span class="search-clear" id="searchClear">×</span>
   </div>
 </section>
+
 <!-- FILTERS -->
 <div class="filters">
   <button class="filter-btn active" data-filter="all">All</button>
@@ -966,7 +967,7 @@
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
   import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-  import { getFirestore, collection, query, orderBy, getDocs, doc, updateDoc, increment, getDoc, where, limit } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+  import { getFirestore, collection, getDocs, doc, updateDoc, increment } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
   const firebaseConfig = {
     apiKey: "AIzaSyDCb0OReMC3BScflE5lpvsp9F6Denq5nqM",
@@ -1175,7 +1176,6 @@
   });
 
   // Push state when modal opens
-  const origOpenModal = window.openModal;
 
   // Copy prompt
   window.copyPrompt = function(type) {
@@ -1249,7 +1249,7 @@
     }
   };
 
- // Filter
+    // Filter
   window.setFilter = function(filter) {
     currentFilter = filter;
     document.querySelectorAll('.filter-btn').forEach(b => {

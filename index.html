@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -648,11 +649,13 @@
 
   .prompt-section-header {
     display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 12px 16px;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+    padding: 12px 14px;
     border-bottom: 1px solid var(--border);
   }
+  .copy-btn-wrap { width: 100%; }
 
   .prompt-section-label {
     display: flex;
@@ -666,11 +669,11 @@
   .prompt-section-label .emoji { font-size: 18px; }
 
   .copy-btn {
-    background: rgba(255,193,7,0.1);
-    border: 1px solid rgba(255,193,7,0.2);
+    background: linear-gradient(135deg, rgba(255,193,7,0.15), rgba(255,152,0,0.1));
+    border: 1px solid rgba(255,193,7,0.3);
     color: var(--gold);
-    padding: 6px 14px;
-    font-size: 11px;
+    padding: 8px 0;
+    font-size: 12px;
     font-family: 'Syne', sans-serif;
     font-weight: 700;
     cursor: pointer;
@@ -679,7 +682,9 @@
     transition: all 0.2s;
     display: flex;
     align-items: center;
-    gap: 5px;
+    justify-content: center;
+    gap: 6px;
+    width: 100%;
   }
 
   .copy-btn:hover { background: rgba(255,193,7,0.2); border-color: var(--gold); }
@@ -839,7 +844,6 @@
     <span class="search-clear" id="searchClear">×</span>
   </div>
 </section>
-
 <!-- FILTERS -->
 <div class="filters">
   <button class="filter-btn active" data-filter="all">All</button>
@@ -847,6 +851,8 @@
   <button class="filter-btn" data-filter="cinematic">🎬 Cinematic</button>
   <button class="filter-btn" data-filter="4k">✨ 4K Image</button>
   <button class="filter-btn" data-filter="anime">🌸 Anime</button>
+  <button class="filter-btn profile-filter" data-filter="profile-suraj" id="filterSuraj" style="display:none;">👑 Suraj</button>
+  <button class="filter-btn profile-filter" data-filter="profile-rina" id="filterRina" style="display:none;">✨ Rina</button>
 </div>
 
 <!-- GALLERY -->
@@ -898,9 +904,7 @@
               <span class="emoji">👩</span>
               <span>Girl Version</span>
             </div>
-            <button class="copy-btn" onclick="copyPrompt('girl')">
-              <span>📋</span> Copy
-            </button>
+            <div class="copy-btn-wrap"><button class="copy-btn" onclick="copyPrompt('girl')"><span>📋</span> Copy Girl Prompt</button></div>
           </div>
           <div class="prompt-text" id="girlPrompt">Loading...</div>
         </div>
@@ -912,9 +916,7 @@
               <span class="emoji">👨</span>
               <span>Boy Version</span>
             </div>
-            <button class="copy-btn" onclick="copyPrompt('boy')">
-              <span>📋</span> Copy
-            </button>
+            <div class="copy-btn-wrap"><button class="copy-btn" onclick="copyPrompt('boy')"><span>📋</span> Copy Boy Prompt</button></div>
           </div>
           <div class="prompt-text" id="boyPrompt">Loading...</div>
         </div>
@@ -995,6 +997,12 @@
       av.textContent = user.displayName ? user.displayName[0].toUpperCase() : user.email[0].toUpperCase();
       av.onclick = () => window.location.href = 'profile.html';
       document.getElementById('profileNavBtn').href = 'profile.html';
+      // Show profile filters for admins
+      const adminEmails = ['su905072@gmail.com', 'rinaeditig@gmail.com'];
+      if (adminEmails.includes(user.email)) {
+        document.getElementById('filterSuraj').style.display = 'inline-flex';
+        document.getElementById('filterRina').style.display = 'inline-flex';
+      }
     }
   });
 
@@ -1050,7 +1058,7 @@
             ? `<img class="card-img" src="${p.imageUrl}" alt="${p.title}" loading="lazy">`
             : `<div class="card-img-placeholder" style="background:${p.bg || '#1a1a2e'}">${p.emoji || '🎨'}</div>`
           }
-          <div class="card-category-tag">${p.category || 'Prompt'}</div>
+          <div class="card-category-tag">${p.personalLabel ? p.personalLabel : (p.category || 'Prompt')}</div>
           <div class="card-like-btn ${isLiked(p.id) ? 'liked' : ''}" onclick="event.stopPropagation(); quickLike('${p.id}', this)">
             ${isLiked(p.id) ? '❤️' : '🤍'}
           </div>
@@ -1094,7 +1102,8 @@
     const prompt = allPrompts.find(p => p.id === id);
     if (!prompt) return;
     currentPrompt = prompt;
- // Update view count
+
+    // Update view count
     if (!id.startsWith('demo')) {
       updateDoc(doc(db, 'prompts', id), { views: increment(1) }).catch(() => {});
     }
@@ -1250,13 +1259,26 @@
       'trending': '🔥 Trending',
       'cinematic': '🎬 Cinematic',
       '4k': '✨ 4K Image',
-      'anime': '🌸 Anime'
+      'anime': '🌸 Anime',
+      'profile-suraj': '👑 Suraj's Prompts',
+      'profile-rina': '✨ Rina's Prompts'
     };
     document.getElementById('sectionTitle').textContent = titles[filter] || 'All Prompts';
 
     let filtered = allPrompts;
     if (filter === 'trending') {
-      filtered = [...allPrompts].sort((a, b) => (b.copyCount || 0) - (a.copyCount || 0));
+      // 7-day trending: use recentCopies if available, else copyCount
+      const now = Date.now();
+      const sevenDays = 7 * 24 * 60 * 60 * 1000;
+      filtered = [...allPrompts].sort((a, b) => {
+        const aRecent = a.recentCopies || a.copyCount || 0;
+        const bRecent = b.recentCopies || b.copyCount || 0;
+        return bRecent - aRecent;
+      });
+    } else if (filter === 'profile-suraj') {
+      filtered = allPrompts.filter(p => p.authorId === 'Fah2A6DQmwg804vgdS' || p.author === 'Surajpt' || p.personalLabel === 'SURAJ');
+    } else if (filter === 'profile-rina') {
+      filtered = allPrompts.filter(p => p.personalLabel === 'RINA' || p.author === 'rina');
     } else if (filter !== 'all') {
       filtered = allPrompts.filter(p => (p.tags || [p.category]).includes(filter) || p.category === filter);
     }
@@ -1268,18 +1290,18 @@
   document.querySelectorAll('.filter-btn').forEach(btn => {
     btn.addEventListener('click', () => setFilter(btn.dataset.filter));
   });
-
+ 
   // Search
   document.getElementById('searchInput').addEventListener('input', function() {
     const q = this.value.toLowerCase();
     document.getElementById('searchClear').style.display = q ? 'block' : 'none';
     if (!q) { renderPrompts(allPrompts); return; }
-    const filtered = allPrompts.filter(p =>
-      p.title?.toLowerCase().includes(q) ||
-      p.girlPrompt?.toLowerCase().includes(q) ||
-      p.boyPrompt?.toLowerCase().includes(q) ||
-      p.category?.toLowerCase().includes(q)
-    );
+    // Smart search: handle "post 19", "post #19", "#19", "High quality"
+    const qClean = q.replace(/post\s*#?/i, '').replace(/#/g, '').trim();
+    const filtered = allPrompts.filter(p => {
+      const fields = [p.title, p.girlPrompt, p.boyPrompt, p.category, p.tags?.join(' '), p.author, p.personalLabel].map(f => (f || '').toLowerCase());
+      return fields.some(f => f.includes(q) || f.includes(qClean));
+    });
     renderPrompts(filtered);
   });
 
@@ -1295,8 +1317,9 @@
     t.textContent = msg;
     t.classList.add('show');
     setTimeout(() => t.classList.remove('show'), 2500);
-        }
- // Init
+  }
+
+  // Init
   loadPrompts();
 </script>
 
